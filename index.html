@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bootstrap, from Twitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../assets/css/bootstrap-responsive.css" rel="stylesheet">
+	<script src="../assets/js/jquery.js"></script>
+    <script src="../assets/js/bootstrap-transition.js"></script>
+    <script src="../assets/js/bootstrap-alert.js"></script>
+    <script src="../assets/js/bootstrap-modal.js"></script>
+    <script src="../assets/js/bootstrap-dropdown.js"></script>
+    <script src="../assets/js/bootstrap-scrollspy.js"></script>
+    <script src="../assets/js/bootstrap-tab.js"></script>
+    <script src="../assets/js/bootstrap-tooltip.js"></script>
+    <script src="../assets/js/bootstrap-popover.js"></script>
+    <script src="../assets/js/bootstrap-button.js"></script>
+    <script src="../assets/js/bootstrap-collapse.js"></script>
+    <script src="../assets/js/bootstrap-carousel.js"></script>
+    <script src="../assets/js/bootstrap-typeahead.js"></script>
+    <style>
+	.pagination {
+		height: 40px;
+		margin: 0;
+	}
+    </style>
+
+	<script src="find.js"></script>
+    <script language="JavaScript" src="list.js" type="text/javascript"></script>
+
+    <script language="JavaScript" type="text/javascript">
+        (function( $ ){
+				//var items = <?=custom_json_encode($arResult["ITEMS"])?>;
+				/*var search_settings = {};          //настройки поиска
+				var search_settings_widget = {};   //виджет настроек поиска
+				var pager_settings = {
+									  page: 0,
+									  elements_on_page:1
+				};*/
+
+                var methods = {
+                        init : function( options ) 
+						{
+
+                                // Create some defaults, extending them with any options that were provided
+                                var settings = $.extend({
+                                        'data' : [],
+                                        'fields' : [],
+                                        'fields_name' : {},
+                                        'fields_type' : {},
+                                        'template_items' : function(){},
+                                        'template_pager' : function(){},
+                                        'on_create': function(){},
+                                        'on_update': function(){},
+                                        'on_pager':  function(){},
+										'elements_on_page': 1,
+                                }, options);
+								
+								options.pager_settings = {
+															  page: 0,
+															  elements_on_page: options.elements_on_page
+														 };
+
+                                options.answers = [];
+                                options.raw_fields = [];//все ключи полей всех элементов
+                                for(var data_item_id in options.data)//перебираем все элементы
+                                {         
+									var element = options.data[ data_item_id ];
+										  //св-во    элемент
+                                    for(var field in element)//перебираем все поля каждого элемента
+                                    {
+										var value = element[ field ]; //значение св-ва элемента element
+										//console.log(field,'--------',value);
+                                        if(!options.answers[ field ]) options.answers[ field ] = Array();
+                                        if( options.answers[ field ].indexOf( value ) < 0 ) { options.answers[ field ].push( value );                /*console.log('добавили элемент',field,value,options.answers);*/ }else{/*console.log('НЕ добавили элемент, потому что такой уже есть', options.answers[ field ], value);*/ }//если такого элемента ещё нету, то добавляем его в answers
+                                        if( options.raw_fields.indexOf( field ) < 0 ) { options.raw_fields.push( field ); }//сохраняем названия всех ключей св-в всех элементов в raw_fields
+                                    }
+                                }
+                                //console.log('answers'); //ответы
+                                //console.log(options.answers); //ответы
+                                //console.log('raw_fields'); //поля
+                                //console.log(options.raw_fields); //поля
+								//console.log('fields'); //поля
+								//console.log(options.fields); //поля
+								if(!options.fields)//при инициализации не были указаны поля, которые должны выводиться в фильтре
+								{
+									options.fields = options.raw_fields;
+									//console.log('fields'); //поля
+									//console.log(options.fields); //поля
+								}
+								
+								if(!options.fields_name)//при инициализации не были указаны названия полей, которые должны выводиться в фильтре
+								{
+									options.fields_name = {};
+									for(var field_id = 0; field_id < options.fields.length; field_id++)
+									{
+										options.fields_name[ options.fields[field_id] ] = options.fields[field_id];
+									}
+									
+									//console.log('fields_name'); //поля
+									//console.log(options.fields_name); //поля
+								}
+								
+								
+								
+								methods.make_filter.apply(this,[options]);
+								methods.update_setting.apply(this,[options]);
+								
+								
+
+                                return this;
+                        },	
+						update_pager_settings : function( options, current_page )
+						{
+
+								options.pager_settings.page = parseInt(current_page) ;//устанавливаем текущую страницу
+
+						},
+						update_setting : function( options )
+						{
+								//формируем  search_settings  и  search_settings_widget,  и запускаем обновление списка товаров
+								
+								//jsdf-list  -класс контейнера списка результатов
+
+								options.search_settings = {};//сбрасываем настройки
+								options.search_settings_widget = {};//сбрасываем настройки
+								//update_filter();//учитываем зависимости ключей в фильтре, например скрываем лишние регионы в зависомости от выбранной страны
+
+								this.find('input[type="checkbox"]').each(function(){
+																						if( !this.checked ) return;
+																						if( !options.search_settings[ $(this).data('jsdfControl') ] ) options.search_settings[ $(this).data('jsdfControl') ] = [];  //ключи поиска
+																						options.search_settings[ $(this).data('jsdfControl') ].push( $(this).val() );                               				//ключи поиска
+								});
+								this.find('input[type="radio"]').each(function(){
+																						if( !this.checked ) return;
+																						if( !options.search_settings[ $(this).data('jsdfControl') ] ) options.search_settings[ $(this).data('jsdfControl') ] = [];  //ключи поиска
+																						options.search_settings[ $(this).data('jsdfControl') ].push( $(this).val() );                               				//ключи поиска
+								
+								});	
+								this.find('input[type="text"]').each(function(){
+																						if( $(this).val().length > 0 )
+																						{
+																								if( !options.search_settings[ $(this).data('jsdfControl') ] ) options.search_settings[ $(this).data('jsdfControl') ] = [];  //ключи поиска
+																								options.search_settings[ $(this).data('jsdfControl') ].push( $(this).val() );                               				//ключи поиска
+																						}
+								});	
+								this.find('select').each(function(){
+																						
+																						if( $(this).val() instanceof Array )
+																						{
+																							for( var i=0; i<$(this).val().length; i++)
+																							{
+																								if( $(this).val()[i] )//если значение не пустое, тогда добавляем его в массив настроек поиска 
+																								{
+																									if( !options.search_settings[ $(this).data('jsdfControl') ] ) options.search_settings[ $(this).data('jsdfControl') ] = [];  //ключи поиска
+																									options.search_settings[ $(this).data('jsdfControl') ].push( $(this).val()[i] ); 
+																								}
+																							}
+																						}
+				   
+
+
+				   else
+																						{
+																							if( $(this).val() )//если значение не пустое, тогда добавляем его в массив настроек поиска 
+																							{
+																								if( !options.search_settings[ $(this).data('jsdfControl') ] ) options.search_settings[ $(this).data('jsdfControl') ] = [];  //ключи поиска
+																								options.search_settings[ $(this).data('jsdfControl') ].push( $(this).val() ); 
+																							}
+																						}	
+								});	
+								
+								
+								//console.info('BEGIN - update_setting');
+								//console.log(options.search_settings);      
+								//console.info('END --- update_setting');
+					  
+								//methods.update_pager_settings.apply(this,0);
+								methods.update_list.apply(this,[options]);
+								//methods.update_widgets.apply(this,[options]);
+					
+								//update_pager_settings(0);//сбрасываем текущую страницу на нулевую
+								//update_list();
+								//update_widgets();
+						},
+						update_list : function(options)
+						{
+								//на основе  search_settings  формируем список товаров
+								//console.log( items.find(search_settings).pages({ page:0, elements_on_page:6 }) );
+								var items_filtered = options.data.find(options.search_settings).pages(options.pager_settings);
+								//var items_filtered = options.data.find(options.search_settings).pages({ page:1, elements_on_page:1 });
+								var html_result = '';
+
+								//console.info('BEGIN - update_list');
+								//console.log(options.pager_settings);
+								//console.log({ page:1, elements_on_page:1 });
+								//console.log(options.search_settings);
+								//console.log(options);
+								//console.log(items_filtered[0].ddd);
+								//console.log('items_filtered.length=',items_filtered.length);
+								//console.info('END --- update_list');
+								
+								var $items_list = $(this).find('.jsdf-list');
+								
+								  
+								for (var i=0; i<items_filtered.length; i++)
+								{
+										html_result += '<div>';
+										
+										for(var field_id = 0; field_id < options.fields.length; field_id++)
+										{
+											//this.append( options.fields[field_id] );
+											var field_sid = options.fields[field_id];
+											if(!items_filtered[i][field_sid])continue;//если у отфилтьтрованного элемента этого свойства нет, тогда не выводим его чтобы не вы водилось undefined
+											
+											html_result += '<div>';
+											html_result += '<b>'+options.fields_name[field_sid] + '</b>: ' + items_filtered[i][field_sid] + '<br />';
+											html_result += '</div><br />';
+											
+										}
+								  }
+
+								$items_list.html( html_result );
+								methods.make_pager.apply(this,[options,items_filtered]);
+								//methods.make_pager(items_filtered);
+						},
+						update_widgets : function()//формирует html виджетов
+						{
+							//обновляем виджеты фильтра
+							var html_result = '', widget = {};
+
+
+							for( var dataName in search_settings_widget)
+							{
+								for( var i=0; i<search_settings_widget[ dataName ].length; i++)
+								{
+									widget = search_settings_widget[dataName][i];
+									html_result += '<div onclick="clear_searching_key(\''+widget.dataName+'\',\''+widget.dataValue+'\')">'+widget.dataNameRu+': <b>'+widget.dataValue+'</b></div>';
+								}
+							}
+
+							if(search_settings_widget[ dataName ]) $('#clear_widgets_list').html('<div class="clear_all" onclick="clear_all_searching_key()">Сбросить фильтр</div>'); else $('#clear_widgets_list').html('')
+							$('#widgets_list').html( html_result );
+						},
+						clear_searching_key : function( dataName, dataValue )
+						{
+							$('.checked').filter('[data-name="'+dataName+'"]').filter('[data-value="'+dataValue+'"]').click();  //сбрасываем выделение чекбоксов
+							$('input[data-name="'+dataName+'"]').val('').blur();
+							update_setting();                                                                                   //перестраиваем список товаров
+						},
+						clear_all_searching_key : function() //полностью очищает фильтр
+						{
+							$('.checked').removeClass('checked');              //сбрасываем выделение чекбоксов
+							$('.disabled').removeClass('disabled');            //сбрасываем выделение чекбоксов
+							$('#filter input[type="text"]').val('').blur();    //очищаем инпуты и блурим их чтобы ползунки перестроились
+							update_setting();                                  //перестраиваем список товаров
+						},
+						update_pager : function(options,i)
+						{
+								methods.update_pager_settings.apply(this,[options,i]);
+								methods.update_list.apply(this,[options]);
+							  //update_pager_settings(i);
+							  //update_list();
+						},
+						make_pager : function(options,elements)
+						{
+							//console.info('BEGIN - make_pager');
+							//console.log(options.search_settings);
+							//console.log(options);
+							//console.log(elements);
+							//console.info('END --- make_pager');
+							
+							
+							var $items_pager = $(this).find('.jsdf-pager');
+							$items_pager.html('');
+							var html_result = '';
+							
+							  //pagination//////////////////////////////////////////////////////////////////////////////////////////////////////
+							  //
+								  html_result += '<div class="pagination"><ul>';
+							  
+								  if( elements.count_of_pages > 1 )//если всего одна страница тогда не показывем пагинацию
+								  {
+									  if( elements.count_of_pages < 10 )
+									  {
+										  for(var num_page=0; num_page<elements.count_of_pages; num_page++)
+										  {
+											  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+num_page+'" href="#" class="pagination '+( num_page==elements.current_page ? 'sel' : '' )+'">'+(num_page+1)+'</a></li>';
+										  }
+									  }
+									  else if( elements.current_page <=9 )
+									  {
+										  for(var num_page=0; num_page<(elements.count_of_pages>10 ? 10 : elements.count_of_pages); num_page++)
+										  {
+											  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+num_page+'" href="#" class="pagination '+( num_page==elements.current_page ? 'sel' : '' )+'">'+(num_page+1)+'</a></li>';
+										  }
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.current_page+1)+'" href="#" class="pagination next">&#9658;</a></li>&nbsp;&nbsp;';
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.count_of_pages-1)+'" href="#" class="pagination end">конец</a></li>&nbsp;&nbsp;';
+
+									  }
+									  else if( elements.current_page >= elements.count_of_pages-10 )
+									  {
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+0+'" href="#" class="pagination begin">начало</a></li>&nbsp;&nbsp;';
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.current_page-1)+'" href="#" class="pagination prev">&#9668;</a></li>';
+										  for(var num_page=(elements.count_of_pages-10); num_page<(elements.count_of_pages); num_page++)
+										  {
+											  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+num_page+'" href="#" class="pagination '+( num_page==elements.current_page ? 'sel' : '' )+'">'+(num_page+1)+'</a></li>';
+										  }
+
+									  }
+									  else
+									  {
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+0+'" href="#" class="pagination begin">начало</a></li>&nbsp;&nbsp;';
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.current_page-1)+'" href="#" class="pagination prev">&#9668;</a></li>';
+										  for(var num_page=(elements.current_page-4); num_page<(elements.current_page+4); num_page++)
+										  {
+											  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+num_page+'" href="#" class="pagination '+( num_page==elements.current_page ? 'sel' : '' )+'">'+(num_page+1)+'</a></li>';
+										  }
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.current_page+1)+'" href="#" class="pagination next">&#9658;</a></li>&nbsp;&nbsp;';
+										  html_result += '<li'+( num_page==elements.current_page ? ' class="active" ' : '' )+'><a data-jsdf-pageto="'+(elements.count_of_pages-1)+'" href="#" class="pagination end">конец</a></li>';
+									  }
+								  }
+								  
+								  html_result += '</ul></div>';
+
+								  
+								  var __self = this;
+								  $items_pager.html(html_result).find('[data-jsdf-pageto]').click(function(){
+											//methods.update_pager_settings.apply(this,[options,i]);
+											//methods.update_list.apply(this,[options]);
+											//update_pager_settings(i);
+											//update_list();
+											//console.log( $(this).attr('data-jsdf-pageto') );
+											//methods.update_pager.apply(this,[options,$(this).attr('data-jsdf-pageto')]);
+											options.pager_settings.page = parseInt( $(this).attr('data-jsdf-pageto') );
+											
+											//console.log(options);
+											methods.update_list.apply(__self,[options]);
+											return false;
+								  });
+							  //
+							  //pagination//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+						},
+						make_filter : function( options )//строит фильтр и навешивает события на контролы 
+						{
+								//console.info( 'BEGIN - make_filter' );
+								//console.log( options.fields );//sid'ы всех полей
+								//console.log( options.fields_name );//читабельные названия всех sid'ов полей
+								//console.log( options.answers );
+								//console.info( 'END --- make_filter' );
+								
+                                var html_result = '';
+								html_result += '<div class="jsdf-filter form-horizontal well">';
+                                for(var field_id = 0; field_id < options.fields.length; field_id++)
+                                {
+                                    //this.append( options.fields[field_id] );
+									var field_sid = options.fields[field_id];
+									
+									//console.log( options.fields_type[ field_sid ] );
+									//console.log( field_sid );
+									
+                                    switch( options.fields_type[ field_sid ] )
+                                    {
+                                        case 'checkbox':
+                                        {
+                                            html_result += '<div class="control-group">';
+											html_result += '<label class="control-label" for="inputEmail">'+options.fields_name[field_sid]+'</label>';
+											html_result += '<div class="controls">';
+                                            for( var answer_id = 0; answer_id < options.answers[ field_sid ].length; answer_id++ )
+                                            {
+                                                html_result += '<label class="checkbox"><input data-jsdf-control="'+field_sid+'" type="checkbox" id="" class="" name="'+field_sid+'" value="'+options.answers[ field_sid ][ answer_id ]+'" />'+options.answers[ field_sid ][ answer_id ]+'</label>';
+                                            }
+                                            html_result += '</div>';
+                                            html_result += '</div>';
+											
+                                            break;
+                                        }
+                                        case 'radio':
+										{
+                                            html_result += '<div class="control-group">';
+											html_result += '<label class="control-label" for="inputEmail">'+options.fields_name[field_sid]+'</label>';
+											html_result += '<div class="controls">';
+                                            for( var answer_id = 0; answer_id < options.answers[ field_sid ].length; answer_id++ )
+                                            {
+                                                html_result += '<label class="radio"><input data-jsdf-control="'+field_sid+'" type="radio" id="" class="" name="'+field_sid+'" value="'+options.answers[ field_sid ][ answer_id ]+'" />'+options.answers[ field_sid ][ answer_id ]+'</label>';
+                                            }
+                                            html_result += '</div>';
+                                            html_result += '</div>';
+                                            break;
+                                        }
+                                        case 'select':
+                                        {
+                                            html_result += '<div class="control-group">';
+											html_result += '<label class="control-label" for="inputEmail">'+options.fields_name[field_sid]+'</label>';
+											html_result += '<div class="controls">';
+                                            html_result += '<select data-jsdf-control="'+field_sid+'" class="" id="">';
+											for( var answer_id = 0; answer_id < options.answers[ field_sid ].length; answer_id++ )
+                                            {
+												html_result += '<option value="'+options.answers[ field_sid ][ answer_id ]+'" >'+options.answers[ field_sid ][ answer_id ]+'</option>';
+                                            }
+											html_result += '</select>';
+                                            html_result += '</div>';
+                                            html_result += '</div>';
+                                            break;
+                                        }
+                                        case 'multiple':
+										{
+                                            html_result += '<div class="control-group">';
+											html_result += '<label class="control-label" for="inputEmail">'+options.fields_name[field_sid]+'</label>';
+											html_result += '<div class="controls">';
+                                            html_result += '<select data-jsdf-control="'+field_sid+'" class="" id="" multiple="multiple">';
+											for( var answer_id = 0; answer_id < options.answers[ field_sid ].length; answer_id++ )
+                                            {
+												html_result += '<option value="'+options.answers[ field_sid ][ answer_id ]+'" >'+options.answers[ field_sid ][ answer_id ]+'</option>';
+                                            }
+											html_result += '</select>';
+                                            html_result += '</div>';
+                                            html_result += '</div>';
+                                            break;
+                                        }
+                                        default://text
+                                        {
+											//console.log('field_sid', field_sid);
+											//console.log('options.fields_name[field_sid]', options.fields_name[field_sid]);
+											
+                                            html_result += '<div class="control-group">';
+                                            html_result += '<label class="control-label" for="inputEmail">'+options.fields_name[field_sid]+'</label>';
+											html_result += '<div class="controls">';
+                                            html_result += '<input data-jsdf-control="'+field_sid+'" type="text" name="" class="" id="" />';
+                                            html_result += '</div>';
+                                            html_result += '</div>';
+                                        }
+                                    }
+                                }
+								html_result += '</div>';
+								html_result += '<div class="jsdf-list"></div>';
+								html_result += '<div class="jsdf-pager"></div>';
+								this.append(html_result);
+								
+								
+								//навешиваем события на контролы////////////////////////////////////////////////////////////
+								//
+									var __self_make_filter = this;
+									this.find('input[type="checkbox"]').click(function(){
+																							methods.update_setting.apply(__self_make_filter,[options]);
+									});
+									this.find('input[type="radio"]').click(function(){
+																							methods.update_setting.apply(__self_make_filter,[options]);
+									});	
+									this.find('input[type="text"]').keyup(function(){
+																							methods.update_setting.apply(__self_make_filter,[options]);
+									});	
+									this.find('select').change(function(){
+																							methods.update_setting.apply(__self_make_filter,[options]);
+									});	
+								//
+								//навешиваем события на контролы////////////////////////////////////////////////////////////
+
+                        },
+						/*add_events_on_controls : function( ) {
+
+                                return this.html('');//очищаем содержимое
+
+                        },
+						show_list : function( ) {
+
+                                return this.html('');//очищаем содержимое
+
+                        },
+						show_pager : function( ) {
+
+                                return this.html('');//очищаем содержимое
+
+                        },
+						destroy : function( ) {
+
+                                return this.html('');//очищаем содержимое
+
+                        },
+                        show : function( ) {
+                                this.show();
+                        },
+                        hide : function( ) {
+                                this.hide();
+                        },
+                        update : function( content ) {
+                                // ...
+                        }*/
+                };
+
+                $.fn.js_data_filter = function( method ) {
+
+                        // Method calling logic
+                        if( methods[method] )
+                        {
+                                return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+                        }
+                        else if( typeof method === 'object' || ! method )
+                        {
+                                return methods.init.apply( this, arguments );
+                        }
+                        else
+                        {
+                                $.error( 'Method ' +  method + ' does not exist on jQuery.js_data_filter' );
+                        }
+
+                };
+
+        })( jQuery );
+    </script>
+
+    <script language="JavaScript" type="text/javascript">
+
+
+        $(document).ready(function(){
+
+                $('#jsdf_content').js_data_filter({
+
+                        data:           json_data,
+                        //fields:         ['aaa','bbb','ccc','ddd','eee'],
+                        /*fields_name: {
+                                        aaa: 'Название',
+                                        bbb: 'Ширина',
+                                        ccc: 'Высота',
+                                        ddd: 'Глубина',
+                                        eee: 'Вес',
+                        },*/
+                        fields_type: {
+                                        aaa: 'text',
+                                        bbb: 'radio',
+                                        ccc: 'select',
+                                        ddd: 'multiple',
+                                        eee: 'checkbox',
+                        },
+						elements_on_page: 10,
+                        //template_items: function(){},
+                        //template_pager: function(){},
+                        //on_create: function(){},
+                        //on_update: function(){},
+                        //on_pager:  function(){},
+
+                });
+
+        });
+    </script>
+
+  </head>
+
+  <body>
+
+
+    <div class="container">
+
+        <div id="jsdf_content"></div>
+
+    </div> 
+
+
+  </body>
+</html>
